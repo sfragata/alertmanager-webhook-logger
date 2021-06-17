@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 )
 
 type AlertHandler struct {
@@ -24,7 +27,8 @@ func (hl AlertHandler) ServeHTTP(response http.ResponseWriter, request *http.Req
 }
 
 func print(text string, file string) {
-	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	rollingFilename := rollingFile(file)
+	f, err := os.OpenFile(rollingFilename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println(err)
 	}
@@ -32,4 +36,17 @@ func print(text string, file string) {
 	if _, err := f.WriteString(text); err != nil {
 		log.Println(err)
 	}
+}
+
+func rollingFile(filename string) string {
+	stringDate := time.Now().Format("2006-01-02") //golang time formatting
+	var rollingFilename string
+	index := strings.LastIndex(filename, ".")
+	if index > -1 {
+		rollingFilename = fmt.Sprintf("%s-%s%s", filename[0:index], stringDate, filename[index:])
+	} else {
+		rollingFilename = fmt.Sprintf("%s-%s", filename, stringDate)
+	}
+	return rollingFilename
+
 }
